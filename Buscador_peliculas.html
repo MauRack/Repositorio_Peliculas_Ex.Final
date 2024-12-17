@@ -4,29 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Información de Películas y Series</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        /* General */
         body {
             margin: 0;
             font-family: 'Lora', serif;
-            background-color: #1c1c1c;
+            background-color: #1a1e2e; /* Azul oscuro */
             color: #fff;
         }
+
+        /* Header */
         .header {
-            background-image: url('https://png.pngtree.com/thumb_back/fh260/background/20191116/pngtree-dark-blue-film-film-abstract-film-screening-image_322451.jpg');
-            background-size: cover;
-            background-position: center;
+            background-color: #02000A; /* Color sólido de fondo para el título */
             text-align: center;
-            padding: 50px 20px;
-            color: #fff;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            padding: 60px 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
         }
         .header h1 {
             font-size: 3em;
             margin: 0;
-            color: #f8d71c;
+            color: #e4a691; /* Melocotón */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
         }
+
+        /* Search bar */
         .search-bar {
             margin: 20px auto;
             display: flex;
@@ -35,19 +37,27 @@
         .search-bar input {
             padding: 10px;
             font-size: 1em;
-            border: none;
-            border-radius: 5px 0 0 5px;
-            width: 300px;
+            border: 2px solid #3b2e2a; /* Marrón oscuro */
+            border-radius: 20px 0 0 20px;
+            background-color: #c1a2a0; /* Rosa suave */
+            color: #372D35;
+            width: 350px;
         }
         .search-bar button {
-            padding: 10px;
+            padding: 10px 20px;
             font-size: 1em;
+            background-color: #556270; /* Gris azulado */
             border: none;
-            background-color: #59071b; /* Rojo vino */
             color: #fff;
-            border-radius: 0 5px 5px 0;
+            border-radius: 0 20px 20px 0;
             cursor: pointer;
+            transition: background 0.3s ease;
         }
+        .search-bar button:hover {
+            background-color: #3b2e2a; /* Marrón oscuro */
+        }
+
+        /* Content */
         .content {
             padding: 20px;
             display: flex;
@@ -56,10 +66,10 @@
         }
         .movie-container {
             display: flex;
-            background-color: #5d031a; /* Rojo vino */
+            background-color: #c1a2a0; /* Rosa suave */
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 4px 8px rgba(10, 10, 10, 0.7);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
         }
         .movie-container img {
             width: 200px;
@@ -71,22 +81,30 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            color: #372D35; /* Morado oscuro */
         }
         .movie-title {
             font-size: 1.8em;
             font-weight: bold;
-            color: #000000;
-            margin: 0 0 10px;
+            margin-bottom: 10px;
+            color: #3b2e2a; /* Marrón oscuro */
         }
         .rating, .genres {
             font-size: 1.1em;
             margin: 5px 0;
+            color: #556270; /* Gris azulado */
         }
         .platforms img {
             width: 40px;
             margin: 5px;
             border-radius: 5px;
         }
+        .movie-details p {
+            font-size: 0.9em;
+            color: #372D35; /* Morado oscuro */
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
             .movie-container {
                 flex-direction: column;
@@ -100,15 +118,18 @@
     </style>
 </head>
 <body>
+    <!-- Header -->
     <div class="header">
-        <h1>Información de Películas y Series</h1>
+        <h1>🎬 Información de Películas y Series</h1>
     </div>
 
+    <!-- Search Bar -->
     <div class="search-bar">
         <input id="movie-input" type="text" placeholder="Buscar película o serie...">
         <button onclick="searchMovies()">Buscar</button>
     </div>
 
+    <!-- Content -->
     <div class="content" id="content">
         <!-- Resultados de búsqueda -->
     </div>
@@ -123,13 +144,12 @@
                 return;
             }
 
-            // Modificando la URL para buscar tanto películas como series
             const searchUrl = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(movieName)}&language=es-ES`;
 
             try {
                 const response = await fetch(searchUrl);
                 const data = await response.json();
-                displayAllMoviesAndSeries(data.results); // Muestra tanto películas como series
+                displayAllMoviesAndSeries(data.results);
             } catch (error) {
                 console.error('Error al buscar las películas y series:', error);
             }
@@ -137,7 +157,7 @@
 
         async function displayAllMoviesAndSeries(results) {
             const contentContainer = document.getElementById('content');
-            contentContainer.innerHTML = ''; // Limpia contenido anterior
+            contentContainer.innerHTML = '';
 
             if (!results || results.length === 0) {
                 contentContainer.innerHTML = '<p>No se encontraron resultados.</p>';
@@ -155,7 +175,7 @@
                             <div class="movie-details">
                                 <div>
                                     <div class="movie-title">${item.title || item.name} (${item.release_date ? item.release_date.split('-')[0] : 'N/A'})</div>
-                                    <div class="rating">⭐ Calificación: ${item.vote_average}/10</div>
+                                    <div class="rating">⭐ Calificación: ${item.vote_average || 'No disponible'}/10</div>
                                     <div class="genres"><strong>Géneros:</strong> ${genres}</div>
                                     <p><strong>ID:</strong> ${item.id}</p>
                                     <p>${item.overview || 'Sin sinopsis disponible'}</p>
@@ -192,9 +212,9 @@
                 const platforms = data.results?.US?.flatrate;
 
                 if (platforms) {
-                    return platforms.map(p => `
-                        <img src="https://image.tmdb.org/t/p/w200${p.logo_path}" alt="${p.provider_name}" title="${p.provider_name}">
-                    `).join('');
+                    return platforms.map(p => 
+                        `<img src="https://image.tmdb.org/t/p/w200${p.logo_path}" alt="${p.provider_name}" title="${p.provider_name}">`
+                    ).join('');
                 }
                 return '';
             } catch (error) {
