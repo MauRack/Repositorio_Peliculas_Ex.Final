@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Información de Películas y Series</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Lora', serif;
+            background-color: #1c1c1c;
+            color: #fff;
+        }
+        .header {
+            background-image: url('https://png.pngtree.com/thumb_back/fh260/background/20191116/pngtree-dark-blue-film-film-abstract-film-screening-image_322451.jpg');
+            background-size: cover;
+            background-position: center;
+            text-align: center;
+            padding: 50px 20px;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+        .header h1 {
+            font-size: 3em;
+            margin: 0;
+            color: #f8d71c;
+        }
+        .search-bar {
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+        }
+        .search-bar input {
+            padding: 10px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px 0 0 5px;
+            width: 300px;
+        }
+        .search-bar button {
+            padding: 10px;
+            font-size: 1em;
+            border: none;
+            background-color: #59071b; /* Rojo vino */
+            color: #fff;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+        }
+        .content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .movie-container {
+            display: flex;
+            background-color: #5d031a; /* Rojo vino */
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(10, 10, 10, 0.7);
+        }
+        .movie-container img {
+            width: 200px;
+            object-fit: cover;
+        }
+        .movie-details {
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .movie-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #000000;
+            margin: 0 0 10px;
+        }
+        .rating, .genres {
+            font-size: 1.1em;
+            margin: 5px 0;
+        }
+        .platforms img {
+            width: 40px;
+            margin: 5px;
+            border-radius: 5px;
+        }
+        @media (max-width: 768px) {
+            .movie-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .movie-container img {
+                width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Información de Películas y Series</h1>
+    </div>
+
+    <div class="search-bar">
+        <input id="movie-input" type="text" placeholder="Buscar película o serie...">
+        <button onclick="searchMovies()">Buscar</button>
+    </div>
+
+    <div class="content" id="content">
+        <!-- Resultados de búsqueda -->
+    </div>
+
+    <script>
+        const apiKey = 'f6d6d0150dc01c08d2895f0689aba2c3';
+
+        async function searchMovies() {
+            const movieName = document.getElementById('movie-input').value.trim();
+            if (!movieName) {
+                alert('Por favor, ingresa el nombre de una película o serie.');
+                return;
+            }
+
+            // Modificando la URL para buscar tanto películas como series
+            const searchUrl = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(movieName)}&language=es-ES`;
+
+            try {
+                const response = await fetch(searchUrl);
+                const data = await response.json();
+                displayAllMoviesAndSeries(data.results); // Muestra tanto películas como series
+            } catch (error) {
+                console.error('Error al buscar las películas y series:', error);
+            }
+        }
+
+        async function displayAllMoviesAndSeries(results) {
+            const contentContainer = document.getElementById('content');
+            contentContainer.innerHTML = ''; // Limpia contenido anterior
+
+            if (!results || results.length === 0) {
+                contentContainer.innerHTML = '<p>No se encontraron resultados.</p>';
+                return;
+            }
+
+            for (const item of results) {
+                if (item.media_type === 'movie' || item.media_type === 'tv') {
+                    const genres = await getGenres(item.genre_ids, item.media_type);
+                    const platforms = await getPlatforms(item.id, item.media_type);
+
+                    const itemElement = `
+                        <div class="movie-container">
+                            <img src="${item.poster_path ? 'https://image.tmdb.org/t/p/w500' + item.poster_path : 'https://via.placeholder.com/200x300'}" alt="Poster">
+                            <div class="movie-details">
+                                <div>
+                                    <div class="movie-title">${item.title || item.name} (${item.release_date ? item.release_date.split('-')[0] : 'N/A'})</div>
+                                    <div class="rating">⭐ Calificación: ${item.vote_average}/10</div>
+                                    <div class="genres"><strong>Géneros:</strong> ${genres}</div>
+                                    <p><strong>ID:</strong> ${item.id}</p>
+                                    <p>${item.overview || 'Sin sinopsis disponible'}</p>
+                                </div>
+                                <div class="platforms">${platforms || '<p>No hay plataformas disponibles</p>'}</div>
+                            </div>
+                        </div>
+                    `;
+                    contentContainer.innerHTML += itemElement;
+                }
+            }
+        }
+
+        async function getGenres(genreIds, mediaType) {
+            const genreUrl = `https://api.themoviedb.org/3/genre/${mediaType}/list?api_key=${apiKey}&language=es-ES`;
+            try {
+                const response = await fetch(genreUrl);
+                const data = await response.json();
+                const genreMap = {};
+                data.genres.forEach(genre => genreMap[genre.id] = genre.name);
+
+                return genreIds.map(id => genreMap[id]).join(', ') || 'No disponible';
+            } catch (error) {
+                console.error('Error al obtener géneros:', error);
+                return 'No disponible';
+            }
+        }
+
+        async function getPlatforms(itemId, mediaType) {
+            const url = `https://api.themoviedb.org/3/${mediaType}/${itemId}/watch/providers?api_key=${apiKey}`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                const platforms = data.results?.US?.flatrate;
+
+                if (platforms) {
+                    return platforms.map(p => `
+                        <img src="https://image.tmdb.org/t/p/w200${p.logo_path}" alt="${p.provider_name}" title="${p.provider_name}">
+                    `).join('');
+                }
+                return '';
+            } catch (error) {
+                console.error('Error al obtener plataformas:', error);
+                return '';
+            }
+        }
+    </script>
+</body>
+</html>
