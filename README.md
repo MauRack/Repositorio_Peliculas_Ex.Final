@@ -14,7 +14,7 @@ Este proyecto es un script en Python que permite obtener información sobre pel�
 import requests
 
 # Configuración de la clave de la API y la URL
-api_key = "538bda4b"
+api_key = "538bda4b" # El usuario debe registrarse en la página e ingresar su clave API
 movie_title = input("Ingrese la película o serie: ")  # Título de la película
 api_url = f"http://www.omdbapi.com/?apikey={api_key}&t={movie_title}"
 
@@ -40,6 +40,9 @@ if response.status_code == 200:
 else:
     print("Error en la solicitud:", response.status_code)
 ```
+El API devuelve el título, año, género, director, actores, trama y un poster de la película
+
+
 #  Películas y Series con TMDB API
 Este script en Python utiliza la API de **TMDB** (The Movie Database) para buscar información sobre películas o series, como su título, sinopsis, calificación, fecha de estreno y las plataformas de streaming disponibles en una región específica. A continuación, el código completo:
 
@@ -124,6 +127,8 @@ movie_name = input("Ingrese el nombre de la película o serie: ")
 region = "ES"  # Región predeterminada: España
 buscar_pelicula(movie_name, region)
 ```
+El API devuelve el título, fecha de estreno, sinopsis, calificación y plataformas de disponibilidad
+
 
 # Trakt API Movie/Series Info
 
@@ -173,5 +178,65 @@ if response.status_code == 200:
 else:
     print("Error:", response.status_code, response.text)
 ```
+Finalmente, el API devuelve el título, año, sinopsis y puntuación dada a la película
 
+# Integración con HTML
 
+Además de las APIs mencionadas, el proyecto incluye una página HTML interactiva para mostrar resultados en un entorno visual y amigable.
+
+## Código
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Películas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .movie {
+            border: 1px solid #ccc;
+            background: #fff;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Buscador de Películas</h1>
+    <div id="results">
+        <!-- Resultados dinámicos aquí -->
+    </div>
+
+    <script>
+        async function buscarPeliculas(query) {
+            const response = await fetch(`https://api.example.com/search?q=${query}`);
+            const data = await response.json();
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            data.results.forEach(movie => {
+                const movieDiv = document.createElement('div');
+                movieDiv.classList.add('movie');
+                movieDiv.innerHTML = `
+                    <h2>${movie.title}</h2>
+                    <p>${movie.overview}</p>
+                `;
+                resultsDiv.appendChild(movieDiv);
+            });
+        }
+
+        // Ejemplo: Llamar a la función con un término de búsqueda
+        buscarPeliculas('Matrix');
+    </script>
+</body>
+</html>
+```
+
+Este archivo permite mostrar dinámicamente la información de las películas buscadas mediante una API.
