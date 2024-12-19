@@ -129,11 +129,6 @@ buscar_pelicula(movie_name, region)
 
 Este script de Python permite obtener información detallada sobre películas y series utilizando la API de Trakt. El código solicita al usuario el nombre de una película o serie y muestra detalles como el título, año de lanzamiento, sinopsis y puntuación.
 
-## Requisitos
-
-- Python 3.x
-- `requests` library (se puede instalar con `pip install requests`)
-
 ## Funcionamiento
 
 1. El script solicita al usuario que ingrese el nombre de una película o serie.
