@@ -192,48 +192,244 @@ Además de las APIs mencionadas, el proyecto incluye una página HTML interactiv
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscador de Películas</title>
+    <title>Información de Películas y Series</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: 'Lora', serif;
+            background-color: #121212;
+            color: #fff;
             margin: 0;
-            padding: 20px;
+            padding: 0;
         }
-        .movie {
-            border: 1px solid #ccc;
-            background: #fff;
+
+        .header {
+            background-color: #181818;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #fff;
+            font-size: 36px;
+        }
+
+        .search-bar {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .search-bar input {
+            width: 50%;
+            padding: 10px;
+            font-size: 16px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .search-bar button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .search-bar button:hover {
+            background-color: #0056b3;
+        }
+
+        .content {
+            margin-top: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .movie-container {
+            width: 250px;
+            margin: 15px;
+            background-color: #222;
+            border-radius: 8px;
+            overflow: hidden;
+            color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .movie-container img {
+            width: 100%;
+            height: 350px;
+            object-fit: cover;
+        }
+
+        .movie-details {
             padding: 15px;
+        }
+
+        .movie-title {
+            font-size: 18px;
+            font-weight: bold;
             margin-bottom: 10px;
+        }
+
+        .rating {
+            color: #FFD700;
+        }
+
+        .genres, .platforms {
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        .movie-details p {
+            font-size: 14px;
+            color: #aaa;
         }
     </style>
 </head>
 <body>
-    <h1>Buscador de Películas</h1>
-    <div id="results">
-        <!-- Resultados dinámicos aquí -->
+    <div class="header">
+        <h1>🎬 Información de Películas y Series</h1>
+    </div>
+
+    <div class="search-bar">
+        <input id="movie-input" type="text" placeholder="Buscar película o serie...">
+        <button onclick="searchMovies()">Buscar</button>
+    </div>
+
+    <div class="content" id="content">
     </div>
 
     <script>
-        async function buscarPeliculas(query) {
-            const response = await fetch(`https://api.example.com/search?q=${query}`);
-            const data = await response.json();
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '';
+        const apiKeyTMDb = 'f6d6d0150dc01c08d2895f0689aba2c3';
+        const apiKeyOMDB = '538bda4b';
+        const CLIENT_ID_Trakt = 'f1e01b686947368b3f63b6ccb47e16f3ccec02633762ba04ba3b7a8033df45e9';
 
-            data.results.forEach(movie => {
-                const movieDiv = document.createElement('div');
-                movieDiv.classList.add('movie');
-                movieDiv.innerHTML = `
-                    <h2>${movie.title}</h2>
-                    <p>${movie.overview}</p>
-                `;
-                resultsDiv.appendChild(movieDiv);
+        async function searchMovies() {
+            const movieName = document.getElementById('movie-input').value.trim();
+            if (!movieName) {
+                alert('Por favor, ingresa el nombre de una película o serie.');
+                return;
+            }
+
+            const resultsTMDb = searchTMDb(movieName);
+            const resultsOMDB = searchOMDB(movieName);
+            const resultsTrakt = searchTrakt(movieName);
+
+            Promise.all([resultsTMDb, resultsOMDB, resultsTrakt]).then(([tmdbResults, omdbResults, traktResults]) => {
+                displayAllMoviesAndSeries([...tmdbResults, ...omdbResults, ...traktResults]);
             });
         }
 
-        // Ejemplo: Llamar a la función con un término de búsqueda
-        buscarPeliculas('Matrix');
+        async function searchTMDb(movieName) {
+            const url = `https://api.themoviedb.org/3/search/multi?api_key=${apiKeyTMDb}&query=${encodeURIComponent(movieName)}&language=es-ES`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                const detailedResults = await Promise.all(data.results.map(async item => {
+                    if (item.id && item.media_type === 'movie') {
+                        const detailsUrl = `https://api.themoviedb.org/3/movie/${item.id}?api_key=${apiKeyTMDb}&language=es-ES&append_to_response=watch/providers`;
+                        const detailsResponse = await fetch(detailsUrl);
+                        const detailsData = await detailsResponse.json();
+                        const platforms = detailsData["watch/providers"]?.results?.ES?.flatrate?.map(provider => provider.provider_name).join(', ') || 'No disponible';
+                        return { ...item, platforms };
+                    }
+                    return item;
+                }));
+                return detailedResults;
+            } catch (error) {
+                console.error('Error al buscar en TMDb:', error);
+                return [];
+            }
+        }
+
+        async function searchOMDB(movieName) {
+            const url = `http://www.omdbapi.com/?apikey=${apiKeyOMDB}&t=${encodeURIComponent(movieName)}&language=es`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                return data.Response === "True" ? [data] : [];
+            } catch (error) {
+                console.error('Error al buscar en OMDB:', error);
+                return [];
+            }
+        }
+
+        async function searchTrakt(movieName) {
+            const url = `https://api.trakt.tv/search/movie?query=${encodeURIComponent(movieName)}&type=movie&extended=full`;
+            const headers = {
+                'Content-Type': 'application/json',
+                'trakt-api-version': '2',
+                'trakt-api-key': CLIENT_ID_Trakt
+            };
+
+            try {
+                const response = await fetch(url, { headers });
+                const data = await response.json();
+                return data || [];
+            } catch (error) {
+                console.error('Error al buscar en Trakt.tv:', error);
+                return [];
+            }
+        }
+
+        function displayAllMoviesAndSeries(results) {
+            const contentContainer = document.getElementById('content');
+            contentContainer.innerHTML = '';
+
+            if (!results || results.length === 0) {
+                contentContainer.innerHTML = '<p>No se encontraron resultados.</p>';
+                return;
+            }
+
+            results.forEach(item => {
+                const genres = item.Genre || (item.genre_ids ? item.genre_ids.map(id => genreMap[id]).join(', ') : 'No disponible');
+                const platforms = item.platforms || 'No disponible';
+
+                const itemElement = `
+                    <div class="movie-container">
+                        <img src="${item.Poster || (item.poster_path ? 'https://image.tmdb.org/t/p/w500' + item.poster_path : 'https://via.placeholder.com/200x300')}" alt="Poster">
+                        <div class="movie-details">
+                            <div>
+                                <div class="movie-title">${item.Title || item.title || item.name} (${item.Year || 'N/A'})</div>
+                                <div class="rating">⭐ Calificación: ${item.imdbRating || item.vote_average || 'No disponible'}/10</div>
+                                <div class="genres"><strong>Géneros:</strong> ${genres}</div>
+                                <p><strong>ID:</strong> ${item.imdbID || item.id || 'No disponible'}</p>
+                                <p>${item.Plot || item.overview || 'Sin sinopsis disponible'}</p>
+                            </div>
+                            <div class="platforms"><strong>Plataformas:</strong> ${platforms}</div>
+                        </div>
+                    </div>
+                `;
+                contentContainer.innerHTML += itemElement;
+            });
+        }
+
+        const genreMap = {
+            28: 'Acción',
+            12: 'Aventura',
+            16: 'Animación',
+            35: 'Comedia',
+            80: 'Crimen',
+            99: 'Documental',
+            18: 'Drama',
+            10751: 'Familiar',
+            14: 'Fantasía',
+            36: 'Historia',
+            27: 'Terror',
+            10402: 'Música',
+            9648: 'Misterio',
+            10749: 'Romance',
+            878: 'Ciencia Ficción',
+            10770: 'Película de TV',
+            53: 'Suspenso',
+            10752: 'Bélica',
+            37: 'Western'
+        };
     </script>
 </body>
 </html>
